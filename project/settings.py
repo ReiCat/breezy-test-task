@@ -81,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'breezy_test_db',
-        'USER': 'hallo',
-        'PASSWORD': '260689',
+        'USER': 'breezy_test_user',
+        'PASSWORD': 'breezy_test_password',
         'HOST': 'localhost',
         'PORT': '',
     },
