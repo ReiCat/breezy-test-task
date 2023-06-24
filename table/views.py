@@ -1,6 +1,4 @@
-from django.core.cache import cache
-from collections import defaultdict
-from django.db import connection, models
+from django.db import connection
 from django.db.utils import ProgrammingError, IntegrityError
 from django.core import serializers as dj_serializers
 
@@ -10,6 +8,7 @@ from rest_framework import serializers
 from rest_framework import exceptions
 from table.serializers.generate_table_serializer import GenerateTableSerializer
 from table.serializers.update_table_structure_serializer import UpdateTableStructureSerializer
+from table.serializers.serializer_model import create_serializer_model
 from table.models import TableName, create_model, create_field, get_table_fields
 
 
@@ -53,14 +52,6 @@ def generate_table(request):
 @api_view(['PUT'])
 def update_table_structure(request, table_id: int):
     """This end point allows the user to update the structure of dynamically generated model."""
-
-    try:
-        table_id = int(table_id)
-    except ValueError:
-        raise serializers.ValidationError(
-            'Wrong table ID specified'
-        )
-
     serializer = UpdateTableStructureSerializer(data=request.data)
     if not serializer.is_valid(raise_exception=True):
         return
@@ -93,7 +84,7 @@ def update_table_structure(request, table_id: int):
     old_model = create_model(
         tableObject.table_name,
         fields=old_table_fields,
-        # app_label='table',
+        app_label='table',
         module='table.models'
     )
 
@@ -137,9 +128,47 @@ def update_table_structure(request, table_id: int):
 
 
 @api_view(['POST'])
-def add_table_rows(request, table_id: int):
+def add_table_row(request, table_id: int):
     """Allows the user to add rows to the dynamically generated model while respecting the model schema."""
-    print("ADD TABLE {0}".format(table_id))
+    try:
+        tableObject = TableName.objects.get(pk=table_id)
+    except TableName.DoesNotExist:
+        raise exceptions.NotFound
+
+    result = get_table_fields(tableObject.table_name)
+    if not result:
+        raise exceptions.NotFound
+
+    table_fields = []
+    for field_name, field_type in result:
+        if field_name == "id":
+            continue
+        
+        table_fields.append({
+            "field_name": field_name,
+            "field_type": field_type
+        })
+
+    serializer_model = create_serializer_model(
+        "{}_serializer".format(tableObject.table_name),
+        fields=table_fields,
+        app_label='table',
+        module='table.models'
+    )
+
+    serializer = serializer_model(data=request.data)
+    if not serializer.is_valid(raise_exception=True):
+        return
+
+    model = create_model(
+        tableObject.table_name,
+        fields=table_fields,
+        app_label='table',
+        module='table.models'
+    )
+
+    model.objects.create(**serializer.data)
+
     return Response(status=201)
 
 

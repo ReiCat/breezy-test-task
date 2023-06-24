@@ -27,8 +27,3 @@ class TableFieldSerializer(serializers.Serializer):
             )
 
         return field_type.upper()
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-
-    #     self.fields['name'].error_messages['required'] = u'My custom required msg'
