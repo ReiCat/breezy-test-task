@@ -1,0 +1,7 @@
+Django==4.2.2
+djangorestframework==3.14.0
+Markdown==3.4.3
+django-filter==23.2
+psycopg2-binary==2.9.6
+ujson==5.8.0
+South==1.0.2

@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.html
+*.xml
+
+# Distribution / packaging
+bin/
+include/
+lib/
+
+logs/*
+logs/!.gitkeep
+
+venv/
+
+# IDE files
+.idea
+.vscode
+
+# Unit test / coverage reports
+.cache
+
+# pyenv
+.python-version
+/settings/custom.py
+/pip-selfcheck.json
+
+*.sqlite
+
+.pytest_cache
+
+*.png
