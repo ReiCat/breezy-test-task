@@ -14,6 +14,10 @@ To run this project the Python 3+ and PostgreSQL 14.7 is required.
 
 `postgres=# grant all privileges on database breezy_test_db to breezy_test_user;`
 
+#### Allow user to create databases
+
+`postgres=# ALTER USER your_username CREATEDB;`
+
 `postgres=# \q`
 
 ### Create virtual environment for the project
