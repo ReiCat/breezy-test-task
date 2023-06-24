@@ -1,8 +1,8 @@
 from django.core.cache import cache
 from collections import defaultdict
-
 from django.db import connection, models
 from django.db.utils import ProgrammingError, IntegrityError
+from django.core import serializers as dj_serializers
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -10,7 +10,7 @@ from rest_framework import serializers
 from rest_framework import exceptions
 from table.serializers.generate_table_serializer import GenerateTableSerializer
 from table.serializers.update_table_structure_serializer import UpdateTableStructureSerializer
-from table.models import TableName, create_model, create_field
+from table.models import TableName, create_model, create_field, get_table_fields
 
 
 @api_view(['POST'])
@@ -73,24 +73,9 @@ def update_table_structure(request, table_id: int):
     try:
         tableObject = TableName.objects.get(pk=table_id)
     except TableName.DoesNotExist:
-        print("NOT FOUND")
         raise exceptions.NotFound
 
-    table_name = "table_{}".format(tableObject.table_name)
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT
-                column_name,
-                data_type
-            FROM
-                information_schema.columns
-            WHERE
-                table_schema = 'public'
-            AND
-                table_name = %s;
-        """, [table_name])
-        result = cursor.fetchall()
-
+    result = get_table_fields(tableObject.table_name)
     if not result:
         raise exceptions.NotFound
 
@@ -145,7 +130,10 @@ def update_table_structure(request, table_id: int):
             # Ignore if the field is already exists
             pass
 
-    return Response(status=201)
+    return Response({
+        "table_name": tableObject.table_name,
+        "table_fields": new_table_fields
+    }, status=200)
 
 
 @api_view(['POST'])
@@ -158,5 +146,32 @@ def add_table_rows(request, table_id: int):
 @api_view(['GET'])
 def get_table_rows(request, table_id: int):
     """Gets all the rows in the dynamically generated model."""
-    print("GET TABLE {0}".format(table_id))
-    return Response(status=201)
+    try:
+        tableObject = TableName.objects.get(pk=table_id)
+    except TableName.DoesNotExist:
+        raise exceptions.NotFound
+
+    result = get_table_fields(tableObject.table_name)
+    if not result:
+        raise exceptions.NotFound
+
+    table_fields = []
+    for field_name, field_type in result:
+        if field_name == 'id':
+            continue
+
+        table_fields.append({
+            "field_name": field_name,
+            "field_type": field_type
+        })
+
+    model = create_model(
+        tableObject.table_name,
+        fields=table_fields,
+        app_label='table',
+        module='table.models'
+    )
+
+    table_rows = model.objects.all()
+
+    return Response(dj_serializers.serialize('json', table_rows), status=200)

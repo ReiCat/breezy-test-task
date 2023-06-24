@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db import models
+from django.db import connection
 
 from table.enums import AllowedFieldTypes
 
@@ -65,3 +66,22 @@ def create_model(name, fields=None, app_label='', module='', options=None, admin
         admin.site.register(model, Admin)
 
     return model
+
+
+def get_table_fields(table_name):
+    table_name = "table_{}".format(table_name)
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                column_name,
+                data_type
+            FROM
+                information_schema.columns
+            WHERE
+                table_schema = 'public'
+            AND
+                table_name = %s;
+        """, [table_name])
+        result = cursor.fetchall()
+    
+    return result
