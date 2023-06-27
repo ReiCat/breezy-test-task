@@ -8,14 +8,13 @@ from rest_framework import serializers
 from rest_framework import exceptions
 from table.serializers.generate_table_serializer import GenerateTableSerializer
 from table.serializers.update_table_structure_serializer import UpdateTableStructureSerializer
-from table.serializers.serializer_model import create_serializer_model
-from table.models import TableName, create_model, create_field, get_table_fields
+from table.models import TableName
+from table.utils import create_model, create_field, get_table_fields, create_serializer_model
 
 
 @api_view(['POST'])
 def generate_table(request):
     """Generates dynamic Django model based on user provided fields types and titles."""
-
     serializer = GenerateTableSerializer(data=request.data)
     if not serializer.is_valid(raise_exception=True):
         return

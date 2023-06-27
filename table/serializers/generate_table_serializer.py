@@ -8,14 +8,9 @@ class GenerateTableSerializer(serializers.Serializer):
     table_fields = TableFieldSerializer(many=True)
 
     def validate_table_name(self, table_name):
-        if not isinstance(table_name, str):
-            raise serializers.ValidationError(
-                "Table name must be a string"
-            )
-
         if not len(table_name) > 2:
             raise serializers.ValidationError(
-                "Table name must be at least 3 symbols in length"
+                "Table name must be at least 3 symbols in length."
             )
 
         if (
@@ -24,7 +19,7 @@ class GenerateTableSerializer(serializers.Serializer):
             table_name.startswith('django_')
         ):
             raise serializers.ValidationError(
-                "You cannot use reserved table names, please choose another one"
+                "You cannot use reserved table names, please choose another one."
             )
 
         return table_name
@@ -32,7 +27,7 @@ class GenerateTableSerializer(serializers.Serializer):
     def validate_table_fields(self, table_fields):
         if not len(table_fields) > 0:
             raise serializers.ValidationError(
-                "Table should have at least one field"
+                "Table should have at least one field."
             )
 
         return table_fields
