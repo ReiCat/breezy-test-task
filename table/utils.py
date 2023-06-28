@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.db import models
-from django.db import connection
-
+from django.db import connection, models
 from rest_framework import serializers
+
 from table.enums import AllowedFieldTypes
 
 
@@ -18,6 +17,10 @@ def create_field(field_name, field_type):
         field = models.IntegerField(null=True)
     elif field_type.upper() == AllowedFieldTypes.BOOLEAN.name or field_type == 'boolean':
         field = models.BooleanField(default=False)
+
+    if not field:
+        return
+
     field.column = field_name
     field.many_to_many = None
     return field
@@ -80,13 +83,16 @@ def get_table_fields(table_name):
                 table_name = %s;
         """, [table_name])
         result = cursor.fetchall()
-    
+
     return result
 
 
 def create_serializer_field(field_name, field_type):
     field = None
-    if field_type.upper() == AllowedFieldTypes.STRING.name or field_type == 'character varying':
+    if (
+        field_type.upper() == AllowedFieldTypes.STRING.name or
+        field_type == 'character varying'
+    ):
         field = serializers.CharField(max_length=255)
     elif (
         field_type.upper() == AllowedFieldTypes.NUMBER.name or
@@ -95,9 +101,13 @@ def create_serializer_field(field_name, field_type):
     ):
         field = serializers.IntegerField()
     elif field_type.upper() == AllowedFieldTypes.BOOLEAN.name or field_type == 'boolean':
-        field = serializers.BooleanField(default=False)
-    field.column = field_name
-    field.many_to_many = None
+        field = serializers.BooleanField()
+
+    if not field:
+        return
+
+    field.label = field_name
+
     return field
 
 

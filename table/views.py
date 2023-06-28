@@ -1,15 +1,21 @@
-from django.db import connection
-from django.db.utils import ProgrammingError, IntegrityError
 from django.core import serializers as dj_serializers
-
+from django.db import connection
+from django.db.utils import IntegrityError, ProgrammingError
+from rest_framework import exceptions, serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import serializers
-from rest_framework import exceptions
-from table.serializers.generate_table_serializer import GenerateTableSerializer
-from table.serializers.update_table_structure_serializer import UpdateTableStructureSerializer
+
 from table.models import TableName
-from table.utils import create_model, create_field, get_table_fields, create_serializer_model
+from table.serializers.generate_table_serializer import GenerateTableSerializer
+from table.serializers.update_table_structure_serializer import (
+    UpdateTableStructureSerializer,
+)
+from table.utils import (
+    create_field,
+    create_model,
+    create_serializer_model,
+    get_table_fields,
+)
 
 
 @api_view(['POST'])
@@ -38,13 +44,15 @@ def generate_table(request):
         )
 
     try:
-        table = TableName.objects.create(table_name=table_name)
+        tableObject = TableName.objects.create(table_name=table_name)
     except IntegrityError:
-        # We're passing here because the table has been created but table name already in the db
-        pass
+        tableObject = TableName.objects.get(table_name=table_name)
+
+    if not tableObject:
+        raise exceptions.NotFound
 
     return Response({
-        "table_id": table.pk
+        "table_id": tableObject.pk
     }, status=201)
 
 
@@ -142,12 +150,13 @@ def add_table_row(request, table_id: int):
     for field_name, field_type in result:
         if field_name == "id":
             continue
-        
+
         table_fields.append({
             "field_name": field_name,
             "field_type": field_type
         })
 
+    # Generate custom serializer based on table fields list
     serializer_model = create_serializer_model(
         "{}_serializer".format(tableObject.table_name),
         fields=table_fields,
@@ -166,9 +175,13 @@ def add_table_row(request, table_id: int):
         module='table.models'
     )
 
-    model.objects.create(**serializer.data)
+    added_table_row = model.objects.create(**serializer.data)
 
-    return Response(status=201)
+    return Response({
+        'table_id': table_id,
+        'table_name': tableObject.table_name,
+        'table_row_id': added_table_row.pk
+    }, status=201)
 
 
 @api_view(['GET'])
