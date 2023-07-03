@@ -221,9 +221,9 @@ def get_table_rows(request, table_id: int):
             model = created_model
             fields = '__all__'
 
-    resp_rows_json = []
+    serialized_table_rows = []
     for table_row in table_rows:
         serialized_table_row = ModelSerializer(table_row)
-        resp_rows_json.append(serialized_table_row.data)
+        serialized_table_rows.append(serialized_table_row.data)
 
-    return Response(resp_rows_json, status=200)
+    return Response(serialized_table_rows, status=200)
