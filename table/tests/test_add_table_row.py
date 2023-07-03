@@ -10,7 +10,7 @@ class AddTableRowTestCase(APITestCase):
     def test_get_table_name_returns_error_in_case_if_not_found(self):
         # Arrange
         self.data = {}
-        reversed_url = reverse('add_table_row', kwargs={
+        reversed_url = reverse('add-table-row', kwargs={
             'table_id': 1
         })
 
@@ -31,7 +31,7 @@ class AddTableRowTestCase(APITestCase):
 
         self.assertIsNotNone(tableObj)
 
-        reversed_url = reverse('add_table_row', kwargs={
+        reversed_url = reverse('add-table-row', kwargs={
             'table_id': 1
         })
 
@@ -45,7 +45,7 @@ class AddTableRowTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_add_table_row_in_case_of_success(self):
+    def test_add_table_row_returns_table_row_id_in_case_of_success(self):
         # Arrange
         generate_table_data = {
             'table_name': "aaa",
@@ -67,7 +67,7 @@ class AddTableRowTestCase(APITestCase):
         self.assertTrue(generated_table_response_content['table_id'] > 0)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        add_table_row_reversed_url = reverse('add_table_row', kwargs={
+        add_table_row_reversed_url = reverse('add-table-row', kwargs={
             'table_id': generated_table_response_content['table_id'],
         })
 

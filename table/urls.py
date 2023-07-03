@@ -11,16 +11,16 @@ urlpatterns = [
     path(
         r'table/<int:table_id>',
         views.update_table_structure,
-        name='update_table_structure'
+        name='update-table-structure'
     ),
     path(
         r'table/<int:table_id>/row',
         views.add_table_row,
-        name='add_table_row'
+        name='add-table-row'
     ),
     path(
         r'table/<int:table_id>/rows',
         views.get_table_rows,
-        name='get_table_rows'
+        name='get-table-rows'
     ),
 ]

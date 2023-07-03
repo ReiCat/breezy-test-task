@@ -3,6 +3,7 @@ from django.db import connection
 from django.db.utils import IntegrityError, ProgrammingError
 from rest_framework import exceptions, serializers
 from rest_framework.decorators import api_view
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from table.models import TableName
@@ -206,13 +207,23 @@ def get_table_rows(request, table_id: int):
             "field_type": field_type
         })
 
-    model = create_model(
+    created_model = create_model(
         tableObject.table_name,
         fields=table_fields,
         app_label='table',
         module='table.models'
     )
 
-    table_rows = model.objects.all()
+    table_rows = created_model.objects.all()
 
-    return Response(dj_serializers.serialize('json', table_rows), status=200)
+    class ModelSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = created_model
+            fields = '__all__'
+
+    resp_rows_json = []
+    for table_row in table_rows:
+        serialized_table_row = ModelSerializer(table_row)
+        resp_rows_json.append(serialized_table_row.data)
+
+    return Response(resp_rows_json, status=200)
