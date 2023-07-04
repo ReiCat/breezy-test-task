@@ -9,7 +9,7 @@ class UpdateTableStructureSerializer(serializers.Serializer):
     def validate_new_table_fields(self, new_table_fields):
         if not len(new_table_fields) > 0:
             raise serializers.ValidationError(
-                "Table should have at least one field"
+                "Table should have at least one field."
             )
 
         return new_table_fields

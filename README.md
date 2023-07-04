@@ -36,6 +36,10 @@ To run this project the Python 3+ and PostgreSQL 14.7 is required.
 
 `$ python manage.py migrate`
 
+### Run tests
+
+`$ python manage.py test`
+
 ### Run the server
 
 `$ python manage.py runserver`

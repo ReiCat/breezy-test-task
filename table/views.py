@@ -1,9 +1,7 @@
-from django.core import serializers as dj_serializers
 from django.db import connection
 from django.db.utils import IntegrityError, ProgrammingError
-from rest_framework import exceptions, serializers
+from rest_framework import exceptions, serializers, status
 from rest_framework.decorators import api_view
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from table.models import TableName
@@ -41,7 +39,7 @@ def generate_table(request):
             schema_editor.create_model(new_model)
     except ProgrammingError:
         raise serializers.ValidationError(
-            "Table {} is already exists".format(table_name)
+            "Table {} is already exists.".format(table_name)
         )
 
     try:
@@ -54,7 +52,7 @@ def generate_table(request):
 
     return Response({
         "table_id": tableObject.pk
-    }, status=201)
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PUT'])
@@ -72,11 +70,11 @@ def update_table_structure(request, table_id: int):
     try:
         tableObject = TableName.objects.get(pk=table_id)
     except TableName.DoesNotExist:
-        raise exceptions.NotFound
+        raise exceptions.NotFound(detail='Table name not found.')
 
     result = get_table_fields(tableObject.table_name)
     if not result:
-        raise exceptions.NotFound
+        raise exceptions.NotFound(detail='Table not found.')
 
     old_table_fields, old_table_field_names = [], set()
     for field_name, field_type in result:
@@ -107,10 +105,15 @@ def update_table_structure(request, table_id: int):
             old_table_field['field_name'],
             old_table_field['field_type']
         )
-        with connection.schema_editor() as schema_editor:
-            schema_editor.remove_field(
-                old_model,
-                field
+        try:
+            with connection.schema_editor() as schema_editor:
+                schema_editor.remove_field(
+                    old_model,
+                    field
+                )
+        except ProgrammingError:
+            raise serializers.ValidationError(
+                "Could not remove field {}.".format(old_table_field['field_name'])
             )
 
     for new_table_field in new_table_fields:
@@ -126,13 +129,14 @@ def update_table_structure(request, table_id: int):
                     field
                 )
         except ProgrammingError:
-            # Ignore if the field is already exists
-            pass
+            raise serializers.ValidationError(
+                "Field {} is already exists".format(new_table_field['field_name'])
+            )
 
     return Response({
         "table_name": tableObject.table_name,
         "table_fields": new_table_fields
-    }, status=200)
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -182,7 +186,7 @@ def add_table_row(request, table_id: int):
         'table_id': table_id,
         'table_name': tableObject.table_name,
         'table_row_id': added_table_row.pk
-    }, status=201)
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -226,4 +230,4 @@ def get_table_rows(request, table_id: int):
         serialized_table_row = ModelSerializer(table_row)
         serialized_table_rows.append(serialized_table_row.data)
 
-    return Response(serialized_table_rows, status=200)
+    return Response(serialized_table_rows, status=status.HTTP_200_OK)

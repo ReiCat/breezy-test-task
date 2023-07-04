@@ -40,7 +40,7 @@ class GetTableRowsTestCase(TestCase):
     def test_get_table_rows_returns_table_rows_in_case_of_success(self):
         # Arrange
         data = {
-            'table_name': "aaa",
+            'table_name': "ccc",
             'table_fields': [
                 {
                     'field_name': 'first',
@@ -54,7 +54,7 @@ class GetTableRowsTestCase(TestCase):
         }
 
         new_model = create_model(
-            'aaa',
+            data['table_name'],
             fields=data['table_fields'],
             app_label='table',
             module='table.models'
@@ -65,7 +65,6 @@ class GetTableRowsTestCase(TestCase):
 
         tableObj = TableName.objects.create(table_name=data['table_name'])
         self.assertIsNotNone(tableObj)
-
 
         add_table_row_reversed_url = reverse('add-table-row', kwargs={
             'table_id': tableObj.pk,
